@@ -1,0 +1,47 @@
+Package: com.yourepo.vcamios.vcamaudiorootfull
+Version: 1.0-2
+Architecture: iphoneos-arm
+Maintainer: vcamios <vcamios@gmail.com>
+Depends: mobilesubstrate (>= 0.9.5000)
+Filename: ./debs/VcamAudioRootful_1.0-2.deb
+Size: 35424
+MD5sum: f70d8340f5099cc8e43d905a2a77f7b0
+SHA1: 9527894e3f3b89c661eb25841eb6aebbc31bc2e4
+SHA256: 36f95cfec34dceabc2b27fdefe12ad24ea6fda53808f172ef6f21ded36f89b5b
+Section: Tweaks
+Description: Fake Camera iOS
+Author: 34306 <vcamios@gmail.com>
+Name: Vcam Audio (Rootfull)
+
+Package: com.yourepo.vcamios.vcamaudiorootless
+Version: 1.0-3
+Architecture: iphoneos-arm64
+Maintainer: vcamios <vcamios@gmail.com>
+Pre-Depends: firmware (>= 15), firmware (<= 16)
+Depends: mobilesubstrate (>= 0.9.5000)
+Filename: ./debs/VcamAudioRootless_1.0-3.deb
+Size: 35356
+MD5sum: f3f6db55e44a4941ad1df9b28dada427
+SHA1: 3d96e52378d3a747897d043016280c61e9d022dd
+SHA256: dcf1fe77024058e356a57912747dad22fe903d04c847807d7187aef6d023e617
+Section: Tweaks
+Description: Fake Camera iPhone Activate by pressing volume +- button
+Author: 34306 <vcamios@gmail.com>
+Name: Vcam Audio (Rootless)
+
+Package: com.yourepo.vcamios.vcamiosaudioroothide
+Version: 1.0-2
+Architecture: iphoneos-arm64e
+Maintainer: 34306 <vcamios@gmail.com>
+Pre-Depends: rootless-compat(>= 0.9)
+Depends: mobilesubstrate (>= 0.9.5000)
+Filename: ./debs/VcamAudioRootHide_1.0-2.deb
+Size: 36496
+MD5sum: 0ca06517767f875760dc65f7e805c0f0
+SHA1: 4fcbba6f0fcd5240d1f3b211ed5593c6d82c89bc
+SHA256: 0c68d49e964e88afec036fb0c2a2c606696ecb3a2978bbb2b4dad40d6ed9d68a
+Section: Tweaks
+Description: Fake Camera iPhone Activate by pressing volume +- button
+Author: 34306 <vcamios@gmail.com>
+Name: Vcamios Audio (Roothide)
+
