@@ -1,0 +1,7 @@
+Archive: /
+Suite: stable
+Version: 1.0
+Codename: yourrepo
+Architectures: iphoneos-arm arm64 armv7 armv7s
+Components: main
+Description: Kho lưu trữ các tweak jailbreak của bạn
