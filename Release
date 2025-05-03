@@ -1,8 +1,0 @@
-Origin: LaiBac VCam iOS Repo 
-Label: VCam iOS
-Suite: stable
-Version: 1.0
-Codename: ios
-Architectures: iphoneos-arm
-Components: main
-Description: Repo chứa các tweak dành cho thiết bị iOS
