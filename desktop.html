@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Desktop: Gallery Viewer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>body{background:#000;color:#fff;margin:0;display:flex;align-items:center;justify-content:center;height:100vh}img,video{max-width:100vw;max-height:100vh;display:block}</style>
+</head>
+<body>
+  <div id="container"><em style="opacity:.6">Waiting for frames from phone...</em></div>
+  <script>
+    const container = document.getElementById('container');
+    const ws = new WebSocket(`ws://${location.host}`);
+
+    ws.addEventListener('message', (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'frame') {
+          // replace content
+          container.innerHTML = '';
+          if (msg.data.startsWith('data:image')) {
+            const img = document.createElement('img'); img.src = msg.data; container.appendChild(img);
+          } else if (msg.data.startsWith('data:video')) {
+            const v = document.createElement('video'); v.src = msg.data; v.autoplay = true; v.loop = true; v.muted = true; container.appendChild(v);
+          }
+        }
+      } catch(e) { console.error(e); }
+    });
+
+    ws.addEventListener('open', () => console.log('WS open'));
+  </script>
+</body>
+</html>
