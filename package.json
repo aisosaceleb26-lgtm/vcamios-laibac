@@ -1,0 +1,14 @@
+{
+  "name": "vcamios-laibac",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Virtual camera -> phone gallery prototype",
+  "main": "virtual-camera-server.js",
+  "scripts": {
+    "start": "node virtual-camera-server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}
