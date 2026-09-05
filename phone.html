@@ -4,21 +4,138 @@
   <meta charset="utf-8">
   <title>Phone: Send Gallery to Desktop</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>body{font-family:system-ui,Arial;margin:16px}img{max-width:100%;height:auto;border:1px solid #ccc;margin-top:8px}</style>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f6f7f9; color: #1c1c1e; -webkit-text-size-adjust: 100%; }
+    .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #111; color: #fff; }
+    .topbar h2 { margin: 0; font-size: 16px; flex: 1; }
+    .icon-btn { background: #2a2a2e; color: #fff; border: none; width: 38px; height: 38px; border-radius: 9px; font-size: 18px; cursor: pointer; }
+    .icon-btn:active { background: #3a3a3e; }
+    .tabs { display: flex; background: #fff; border-bottom: 1px solid #e2e2e5; }
+    .tab { flex: 1; padding: 12px; text-align: center; font-weight: 600; color: #8a8a8e; border: none; background: none; font-size: 15px; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { color: #111; border-bottom-color: #2563eb; }
+    .pane { display: none; padding: 14px; }
+    .pane.active { display: block; }
+    img, video { max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 8px; margin-top: 8px; }
+    button.action { background: #2563eb; color: #fff; border: none; padding: 12px 18px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; }
+    button.action:disabled { background: #c2c6cc; }
+    button.action.danger { background: #d93025; }
+    .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+    .status { font-size: 13px; color: #6b6b70; margin-top: 10px; }
+    .status .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #c2c6cc; margin-right: 6px; vertical-align: middle; }
+    .status .dot.on { background: #34c759; }
+    .status .dot.off { background: #d93025; }
+    #camPreview { width: 100%; background: #000; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; }
+
+    /* Settings sheet */
+    .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 9; display: none; }
+    .sheet-backdrop.open { display: block; }
+    .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: #fff; border-radius: 16px 16px 0 0; padding: 18px 16px 24px; transform: translateY(100%); transition: transform .25s ease; max-height: 86vh; overflow-y: auto; }
+    .sheet.open { transform: translateY(0); }
+    .sheet h3 { margin: 0 0 14px; font-size: 17px; }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+    .field .hint { font-size: 12px; color: #8a8a8e; margin-top: 4px; }
+    select, input[type=range] { width: 100%; }
+    select { font-size: 15px; padding: 10px; border: 1px solid #d2d2d7; border-radius: 10px; background: #fff; }
+    .fps-row { display: flex; align-items: center; gap: 10px; }
+    .fps-row input[type=range] { flex: 1; }
+    .fps-val { min-width: 46px; text-align: center; font-weight: 700; font-size: 15px; }
+    .presets { display: flex; gap: 8px; margin-top: 8px; }
+    .presets button { flex: 1; padding: 9px 0; border: 1px solid #d2d2d7; background: #fff; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .presets button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .sheet-close { width: 100%; background: #111; color: #fff; border: none; padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  </style>
 </head>
 <body>
-  <h2>Phone: Pick image/video to send</h2>
-  <input id="file" type="file" accept="image/*,video/*" />
-  <div>
-    <button id="send" disabled>Send to desktop</button>
+  <div class="topbar">
+    <h2>Vcam Sender</h2>
+    <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙</button>
   </div>
-  <div id="preview"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="gallery">Gallery</button>
+    <button class="tab" data-tab="camera">Camera</button>
+  </div>
+
+  <!-- Gallery pane (existing behavior, unchanged) -->
+  <div id="gallery" class="pane active">
+    <h3 style="font-size:15px;margin-top:4px">Pick image/video to send</h3>
+    <input id="file" type="file" accept="image/*,video/*" />
+    <div class="row">
+      <button id="send" class="action" disabled>Send to desktop</button>
+    </div>
+    <div id="preview"></div>
+  </div>
+
+  <!-- Camera pane (new live capture + stream) -->
+  <div id="camera" class="pane">
+    <video id="camPreview" autoplay muted playsinline></video>
+    <div class="row">
+      <button id="camToggle" class="action">Start camera &amp; stream</button>
+    </div>
+    <div class="status">
+      <span><span class="dot" id="wsDot"></span><span id="wsText">Connecting…</span></span><br>
+      <span><span class="dot" id="streamDot"></span><span id="streamText">Stream stopped</span></span>
+    </div>
+    <div class="hint" style="margin-top:10px;color:#8a8a8e;font-size:13px">Tap ⚙ to adjust resolution &amp; frame rate at any time.</div>
+  </div>
+
+  <!-- Settings sheet -->
+  <div id="backdrop" class="sheet-backdrop"></div>
+  <div id="sheet" class="sheet">
+    <h3>Camera Settings</h3>
+    <div class="field">
+      <label for="resSelect">Resolution</label>
+      <select id="resSelect">
+        <option value="640,480">640 × 480 (VGA)</option>
+        <option value="1280,720" selected>1280 × 720 (HD)</option>
+        <option value="1920,1080">1920 × 1080 (FHD)</option>
+        <option value="3840,2160">3840 × 2160 (4K)</option>
+      </select>
+      <div class="hint">Applies to the live camera immediately.</div>
+    </div>
+    <div class="field">
+      <label for="fpsRange">Frame rate (fps)</label>
+      <div class="fps-row">
+        <input id="fpsRange" type="range" min="1" max="60" step="1" value="24">
+        <span class="fps-val" id="fpsVal">24</span>
+      </div>
+      <div class="presets">
+        <button data-fps="15">15</button>
+        <button data-fps="24" class="active">24</button>
+        <button data-fps="30">30</button>
+        <button data-fps="60">60</button>
+      </div>
+      <div class="hint">How many frames per second are sent to the desktop.</div>
+    </div>
+    <button id="closeSheet" class="sheet-close">Done</button>
+  </div>
+
   <script>
-    const ws = new WebSocket(`ws://${location.host}`);
+    /* ---------- shared ---------- */
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+    const wsDot = document.getElementById('wsDot');
+    const wsText = document.getElementById('wsText');
+    ws.addEventListener('open', () => { wsDot.className = 'dot on'; wsText.textContent = 'Connected'; });
+    ws.addEventListener('close', () => { wsDot.className = 'dot off'; wsText.textContent = 'Disconnected'; });
+    ws.addEventListener('error', () => { wsDot.className = 'dot off'; wsText.textContent = 'Connection error'; });
+
+    /* ---------- tabs ---------- */
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById(t.dataset.tab).classList.add('active');
+        if (t.dataset.tab !== 'camera') stopStream();
+      });
+    });
+
+    /* ---------- gallery (unchanged) ---------- */
     const fileInput = document.getElementById('file');
     const sendBtn = document.getElementById('send');
     const preview = document.getElementById('preview');
-
     let currentDataUrl = null;
 
     fileInput.addEventListener('change', async (e) => {
@@ -40,13 +157,106 @@
 
     sendBtn.addEventListener('click', () => {
       if (!currentDataUrl || ws.readyState !== WebSocket.OPEN) return alert('Not connected');
-      // Send as JSON message with type and data
-      const payload = JSON.stringify({ type: 'frame', data: currentDataUrl });
-      ws.send(payload);
+      ws.send(JSON.stringify({ type: 'frame', data: currentDataUrl }));
     });
 
-    ws.addEventListener('open', () => console.log('WS open'));
-    ws.addEventListener('close', () => console.log('WS closed'));
+    /* ---------- settings state ---------- */
+    const settings = { width: 1280, height: 720, fps: 24 };
+    const resSelect = document.getElementById('resSelect');
+    const fpsRange = document.getElementById('fpsRange');
+    const fpsVal = document.getElementById('fpsVal');
+
+    function syncStreamLabel() {
+      if (stream) streamText.textContent = `Streaming ${settings.width}×${settings.height} @ ${settings.fps}fps`;
+    }
+    function applyResolution() {
+      const [w, h] = resSelect.value.split(',').map(Number);
+      settings.width = w; settings.height = h;
+      if (stream && stream.getVideoTracks().length) {
+        stream.getVideoTracks()[0].applyConstraints({
+          width: { ideal: w }, height: { ideal: h }
+        }).catch(() => {});
+      }
+      syncStreamLabel();
+    }
+    function applyFps() {
+      settings.fps = Number(fpsRange.value);
+      fpsVal.textContent = settings.fps;
+      document.querySelectorAll('.presets button').forEach(b =>
+        b.classList.toggle('active', Number(b.dataset.fps) === settings.fps));
+      if (stream && stream.getVideoTracks().length) {
+        stream.getVideoTracks()[0].applyConstraints({ frameRate: { ideal: settings.fps } }).catch(() => {});
+      }
+      if (intervalId) startInterval(); // restart cadence live
+      syncStreamLabel();
+    }
+    resSelect.addEventListener('change', applyResolution);
+    fpsRange.addEventListener('input', applyFps);
+    document.querySelectorAll('.presets button').forEach(b =>
+      b.addEventListener('click', () => { fpsRange.value = b.dataset.fps; applyFps(); }));
+
+    /* ---------- settings sheet open/close ---------- */
+    const sheet = document.getElementById('sheet');
+    const backdrop = document.getElementById('backdrop');
+    function openSheet() { sheet.classList.add('open'); backdrop.classList.add('open'); }
+    function closeSheet() { sheet.classList.remove('open'); backdrop.classList.remove('open'); }
+    document.getElementById('settingsBtn').addEventListener('click', openSheet);
+    document.getElementById('closeSheet').addEventListener('click', closeSheet);
+    backdrop.addEventListener('click', closeSheet);
+
+    /* ---------- live camera capture + stream ---------- */
+    const video = document.getElementById('camPreview');
+    const camToggle = document.getElementById('camToggle');
+    const streamDot = document.getElementById('streamDot');
+    const streamText = document.getElementById('streamText');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let stream = null;
+    let intervalId = null;
+
+    function startInterval() {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(captureFrame, Math.max(16, 1000 / settings.fps));
+    }
+
+    function captureFrame() {
+      if (!video.videoWidth || ws.readyState !== WebSocket.OPEN) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ws.send(JSON.stringify({ type: 'frame', data: canvas.toDataURL('image/jpeg', 0.8) }));
+    }
+
+    async function startStream() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: settings.width }, height: { ideal: settings.height }, frameRate: { ideal: settings.fps } },
+          audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+        startInterval();
+        camToggle.textContent = 'Stop camera & stream';
+        camToggle.classList.add('danger');
+        streamDot.className = 'dot on';
+        streamText.textContent = `Streaming ${settings.width}×${settings.height} @ ${settings.fps}fps`;
+      } catch (err) {
+        alert('Could not access camera: ' + err.message);
+      }
+    }
+
+    function stopStream() {
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      video.srcObject = null;
+      camToggle.textContent = 'Start camera & stream';
+      camToggle.classList.remove('danger');
+      streamDot.className = 'dot';
+      streamText.textContent = 'Stream stopped';
+    }
+
+    camToggle.addEventListener('click', () => stream ? stopStream() : startStream());
   </script>
 </body>
 </html>
