@@ -1,0 +1,31 @@
+name: VcamApp
+options:
+  bundleIdPrefix: com.vcamios
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+
+targets:
+  VcamApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: VcamApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vcamios.vcamapp
+        PRODUCT_NAME: VcamApp
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_FILE: VcamApp/Info.plist
+        # Build an unsigned app for TrollStore / rootless sideload
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"
+        TARGETED_DEVICE_FAMILY: "1"
+        ENABLE_BITCODE: "NO"
