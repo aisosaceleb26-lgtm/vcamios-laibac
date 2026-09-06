@@ -1,16 +1,16 @@
 import UIKit
 import WebKit
 
-/// Wraps the web app's `phone.html` in a native iOS shell.
-/// The page is loaded from the desktop Node server, so the in-page
-/// WebSocket (`ws://${location.host}`) keeps working unchanged.
+/// Wraps the web app's `desktop.html` (the frame viewer) in a native iOS shell.
+/// Android is the sender (`phone.html`); iOS is the viewer. The page is loaded
+/// from the Node server, so the in-page WebSocket keeps working unchanged.
 final class WebViewController: UIViewController {
     private let serverKey = "serverURL"
     private var webView: WKWebView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Vcam Sender"
+        title = "Vcam Viewer"
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "gearshape"),
             style: .plain, target: self, action: #selector(configure)
@@ -56,7 +56,7 @@ final class WebViewController: UIViewController {
 
     private func loadWeb(_ host: String) {
         let base = host.hasSuffix("/") ? String(host.dropLast()) : host
-        guard let url = URL(string: "\(base)/phone.html") else { return }
+        guard let url = URL(string: "\(base)/desktop.html") else { return }
         webView.load(URLRequest(url: url))
     }
 }

@@ -1,8 +1,12 @@
-# VcamApp — rootless IPA build
+# VcamApp — rootless IPA build (iOS = viewer)
 
-Wraps the web app's `phone.html` in a native iOS `WKWebView` shell and packages it as an **unsigned IPA** installable on rootless-jailbroken devices via **TrollStore**.
+Wraps the web app's `desktop.html` (the frame **viewer**) in a native iOS `WKWebView` shell and packages it as an **unsigned IPA** installable on rootless-jailbroken devices via **TrollStore**.
 
-The app loads `phone.html` from your desktop Node server over the LAN, so the page's in-page WebSocket (`ws://${location.host}`) works unchanged — no changes to the web app itself.
+## Roles
+- **Android (sender):** opens `phone.html` in its browser, picks a gallery photo/video or streams from the camera, and sends frames to the server.
+- **iOS (viewer):** runs this **VcamApp**, which loads `desktop.html` from the Node server and displays the incoming frames.
+
+The app loads `desktop.html` from the Node server over the LAN, so the page's in-page WebSocket (`ws://${location.host}`) works unchanged — no changes to the web pages themselves.
 
 ## Project layout
 
@@ -38,7 +42,7 @@ zip -r VcamApp-unsigned.ipa Payload
 ## Installing on a rootless device
 1. Transfer `VcamApp-unsigned.ipa` to the jailbroken device.
 2. Open it with **TrollStore** (the unsigned IPA installs without an App Store signing identity — exactly what TrollStore expects on rootless jailbreaks such as Dopamine/palera1n).
-3. Launch **VcamApp**, tap the ⚙ button, and enter your desktop server address (e.g. `192.168.1.10:3000`).
-4. Make sure the desktop is running `node virtual-camera-server.js` and open `desktop.html` on it, then pick a photo/video in the app to send a frame.
+3. Launch **VcamApp**, tap the ⚙ button, and enter your server address (e.g. `192.168.1.10:3000`).
+4. On the **Android** phone, open `http://<server-ip>:3000/phone.html` in a browser and pick a photo/video (or stream from the camera) — the frames appear on the iOS viewer.
 
-> The desktop Node server is **not** embedded in the app — both the phone app and the desktop viewer must connect to the same server instance on your LAN.
+> The Node server is **not** embedded in the app — the Android sender and the iOS viewer must connect to the same server instance on your LAN. The server can run on any machine (a desktop, a laptop, or even the Android phone itself).
