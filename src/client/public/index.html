@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepLive Cam - Video Call Face & Body Swap</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1200px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 5px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .video-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .video-label {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .video-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      video,
+      canvas {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .controls-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .control-group label {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .toggle-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .toggle-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .toggle-item:hover {
+        background: #efefef;
+      }
+
+      .toggle-item input[type='checkbox'] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .toggle-item label {
+        flex: 1;
+        margin: 0;
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      .slider-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .slider-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #666;
+      }
+
+      input[type='range'] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #ddd;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      input[type='range']::-webkit-slider-thumb:hover {
+        background: #764ba2;
+      }
+
+      input[type='range']::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        border: none;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: #f5f5f5;
+        color: #333;
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #efefef;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .status-bar {
+        padding: 15px 30px;
+        background: #f9f9f9;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ccc;
+      }
+
+      .status-dot.active {
+        background: #4caf50;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎭 DeepLive Cam</h1>
+        <p>Real-time Face & Body Swap for Video Calls</p>
+      </div>
+
+      <div class="content">
+        <div class="video-section">
+          <div class="video-label">Local Video</div>
+          <div class="video-container">
+            <canvas id="localCanvas"></canvas>
+          </div>
+          <div class="video-label">Remote Video</div>
+          <div class="video-container">
+            <canvas id="remoteCanvas"></canvas>
+          </div>
+        </div>
+
+        <div class="controls-section">
+          <div class="control-group">
+            <label>Session Settings</label>
+            <div class="toggle-group">
+              <div class="toggle-item">
+                <input type="checkbox" id="faceSwap" checked />
+                <label for="faceSwap">Face Swap</label>
+              </div>
+              <div class="toggle-item">
+                <input type="checkbox" id="bodySwap" />
+                <label for="bodySwap">Body Swap</label>
+              </div>
+              <div class="toggle-item">
+                <input type="checkbox" id="voiceChanger" />
+                <label for="voiceChanger">Voice Changer</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>Voice Settings</label>
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Pitch</span>
+                <span id="pitchValue">0 semitones</span>
+              </div>
+              <input type="range" id="pitchSlider" min="-12" max="12" value="0" />
+            </div>
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Speed</span>
+                <span id="speedValue">1.0x</span>
+              </div>
+              <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1" />
+            </div>
+            <div class="slider-group">
+              <label>Voice Effect</label>
+              <select id="voiceEffect" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd">
+                <option value="none">None</option>
+                <option value="robot">Robot</option>
+                <option value="echo">Echo</option>
+                <option value="reverb">Reverb</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn-primary" id="startBtn">Start Call</button>
+            <button class="btn-secondary" id="stopBtn" disabled>End Call</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-indicator">
+          <span class="status-dot" id="connectionStatus"></span>
+          <span id="statusText">Disconnected</span>
+        </div>
+        <div id="participantsText">Participants: 0</div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { DeepLiveCamClient } from './lib/client.js';
+
+      let client = null;
+      const localCanvas = document.getElementById('localCanvas');
+
+      // UI Elements
+      const faceSwapToggle = document.getElementById('faceSwap');
+      const bodySwapToggle = document.getElementById('bodySwap');
+      const voiceChangerToggle = document.getElementById('voiceChanger');
+      const pitchSlider = document.getElementById('pitchSlider');
+      const speedSlider = document.getElementById('speedSlider');
+      const voiceEffect = document.getElementById('voiceEffect');
+      const startBtn = document.getElementById('startBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const statusDot = document.getElementById('connectionStatus');
+      const statusText = document.getElementById('statusText');
+
+      // Settings change handlers
+      faceSwapToggle.addEventListener('change', () => {
+        if (client) {
+          client.updateVideoSettings({
+            faceSwapEnabled: faceSwapToggle.checked,
+          });
+        }
+      });
+
+      bodySwapToggle.addEventListener('change', () => {
+        if (client) {
+          client.updateVideoSettings({
+            bodySwapEnabled: bodySwapToggle.checked,
+          });
+        }
+      });
+
+      voiceChangerToggle.addEventListener('change', () => {
+        if (client) {
+          client.updateVideoSettings({
+            voiceChangerEnabled: voiceChangerToggle.checked,
+          });
+        }
+      });
+
+      pitchSlider.addEventListener('input', () => {
+        document.getElementById('pitchValue').textContent = pitchSlider.value + ' semitones';
+        if (client) {
+          client.updateVoiceSettings({ pitch: parseInt(pitchSlider.value) });
+        }
+      });
+
+      speedSlider.addEventListener('input', () => {
+        document.getElementById('speedValue').textContent = speedSlider.value + 'x';
+        if (client) {
+          client.updateVoiceSettings({ speed: parseFloat(speedSlider.value) });
+        }
+      });
+
+      voiceEffect.addEventListener('change', () => {
+        if (client) {
+          client.updateVoiceSettings({ effect: voiceEffect.value });
+        }
+      });
+
+      startBtn.addEventListener('click', async () => {
+        try {
+          const serverUrl = location.origin;
+          const sessionId = new URLSearchParams(location.search).get('session') || 'default-session';
+
+          client = new DeepLiveCamClient(
+            { serverUrl, sessionId },
+            localCanvas
+          );
+
+          await client.initialize();
+          client.startProcessing();
+
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          statusDot.classList.add('active');
+          statusText.textContent = 'Connected';
+        } catch (error) {
+          console.error('Failed to start:', error);
+          alert('Failed to start video call: ' + error.message);
+        }
+      });
+
+      stopBtn.addEventListener('click', async () => {
+        if (client) {
+          await client.disconnect();
+          client = null;
+
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          statusDot.classList.remove('active');
+          statusText.textContent = 'Disconnected';
+        }
+      });
+    </script>
+  </body>
+</html>
